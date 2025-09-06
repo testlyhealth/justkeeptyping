@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Just Keep Typing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: text;
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .text-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            font-size: 32px;
+            text-align: center;
+            width: 300px;
+            height: 50px;
+            position: relative;
+        }
+
+
+
+        .floating-word {
+            position: absolute;
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            font-size: 32px;
+            pointer-events: none;
+            animation: floatAway 2s ease-out forwards;
+            z-index: 10;
+        }
+
+        @keyframes floatAway {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(0.8);
+            }
+        }
+
+        .word-storage {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            font-size: 11px;
+            color: #111111;
+            padding: 20px;
+            line-height: 1.3;
+            column-count: 5;
+            column-gap: 20px;
+            column-fill: auto;
+            overflow: visible;
+            transition: transform 0.5s ease-in-out;
+            width: 100%;
+        }
+
+        .bottom-banner {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            height: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+
+
+
+
+        .word-count {
+            position: absolute;
+            right: 20px;
+            font-size: 14px;
+            color: #333333;
+            font-family: 'Courier New', monospace;
+        }
+
+        .color-toggle {
+            position: absolute;
+            left: 20px;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #333333;
+            border-radius: 50%;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .color-toggle:hover {
+            border-color: #555555;
+        }
+
+        .color-toggle.swell {
+            background: white;
+            border-color: white;
+            transform: scale(1.2);
+            transition: all 0.5s ease-in-out;
+        }
+
+        .save-icon {
+            position: absolute;
+            left: 50px;
+            width: 40px;
+            height: 16px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #333333;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        .load-icon {
+            position: absolute;
+            left: 100px;
+            width: 40px;
+            height: 16px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #333333;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        .save-icon:hover {
+            color: #555555;
+        }
+
+        .load-icon:hover {
+            color: #555555;
+        }
+
+        .recent-word {
+            color: white;
+            transition: color 5s ease-in-out;
+        }
+
+        .scroll-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .scroll-arrow {
+            background: transparent;
+            border: none;
+            color: #333333;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .scroll-arrow:hover {
+            color: #555555;
+        }
+
+        .scroll-arrow:active {
+            color: #777777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="word-storage" id="wordStorage"></div>
+        <div class="bottom-banner">
+            <button class="color-toggle" id="colorToggle"></button>
+            <button class="save-icon" id="saveIcon">Save</button>
+            <button class="load-icon" id="loadIcon">Load</button>
+            <div class="scroll-controls">
+                <button class="scroll-arrow" id="scrollLeft">‹</button>
+                <button class="scroll-arrow" id="scrollRight">›</button>
+            </div>
+            <div class="word-count" id="wordCount">0 words</div>
+        </div>
+        <input type="text" class="text-input" id="textInput" placeholder="" autocomplete="off" spellcheck="false">
+    </div>
+
+    <script>
+        const textInput = document.getElementById('textInput');
+        const container = document.getElementById('container');
+        const wordStorage = document.getElementById('wordStorage');
+        const wordCount = document.getElementById('wordCount');
+        const scrollLeftBtn = document.getElementById('scrollLeft');
+        const scrollRightBtn = document.getElementById('scrollRight');
+        const colorToggle = document.getElementById('colorToggle');
+
+        
+        let storedWords = [];
+        let currentWord = '';
+        let scrollOffset = 0;
+        let wordsShownInWhite = 0; // Track how many words have been shown in white
+        let wordsPerColumn = 200; // Approximate words per column
+        let actualWordsPerColumn = 200; // Will be calculated dynamically
+        let wordsPerRow = 0; // Words per row (calculated dynamically)
+        let completedRows = 0; // Total completed rows across all columns
+        let textColorIndex = 0; // 0 = dark grey, 1 = white, 2 = black
+        const textColors = ['#111111', '#ffffff', '#000000'];
+
+        // Hardcoded lorem ipsum for testing
+        const loremIpsum = "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim id est laborum sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium totam rem aperiam eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt neque porro quisquam est qui dolorem ipsum quia dolor sit amet consectetur adipisci velit sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem ut enim ad minima veniam quis nostrum exercitationem ullam corporis suscipit laboriosam nisi ut aliquid ex ea commodi consequatur quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur vel illum qui dolorem eum fugiat quo voluptas nulla pariatur at vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident similique sunt in culpa qui officia deserunt mollitia animi id est laborum et dolorum fuga et harum quidem rerum facilis est et expedita distinctio nam libero tempore cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus omnis voluptas assumenda est omnis dolor repellendus temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae itaque earum rerum hic tenetur a sapiente delectus ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat";
+        
+        // Split lorem ipsum into words and populate for testing
+        // Generate 1200 words to test scrolling (6 columns worth)
+        const loremWords = ["lorem", "ipsum", "dolor", "sit", "amet", "consectetur", "adipiscing", "elit", "sed", "do", "eiusmod", "tempor", "incididunt", "ut", "labore", "et", "dolore", "magna", "aliqua", "ut", "enim", "ad", "minim", "veniam", "quis", "nostrud", "exercitation", "ullamco", "laboris", "nisi", "ut", "aliquip", "ex", "ea", "commodo", "consequat", "duis", "aute", "irure", "dolor", "in", "reprehenderit", "in", "voluptate", "velit", "esse", "cillum", "dolore", "eu", "fugiat", "nulla", "pariatur", "excepteur", "sint", "occaecat", "cupidatat", "non", "proident", "sunt", "in", "culpa", "qui", "officia", "deserunt", "mollit", "anim", "id", "est", "laborum", "sed", "ut", "perspiciatis", "unde", "omnis", "iste", "natus", "error", "sit", "voluptatem", "accusantium", "doloremque", "laudantium", "totam", "rem", "aperiam", "eaque", "ipsa", "quae", "ab", "illo", "inventore", "veritatis", "et", "quasi", "architecto", "beatae", "vitae", "dicta", "sunt", "explicabo", "nemo", "enim", "ipsam", "voluptatem", "quia", "voluptas", "sit", "aspernatur", "aut", "odit", "aut", "fugit", "sed", "quia", "consequuntur", "magni", "dolores", "eos", "qui", "ratione", "voluptatem", "sequi", "nesciunt", "neque", "porro", "quisquam", "est", "qui", "dolorem", "ipsum", "quia", "dolor", "sit", "amet", "consectetur", "adipisci", "velit", "sed", "quia", "non", "numquam", "eius", "modi", "tempora", "incidunt", "ut", "labore", "et", "dolore", "magnam", "aliquam", "quaerat", "voluptatem", "ut", "enim", "ad", "minima", "veniam", "quis", "nostrum", "exercitationem", "ullam", "corporis", "suscipit", "laboriosam", "nisi", "ut", "aliquid", "ex", "ea", "commodi", "consequatur", "quis", "autem", "vel", "eum", "iure", "reprehenderit", "qui", "in", "ea", "voluptate", "velit", "esse", "quam", "nihil", "molestiae", "consequatur", "vel", "illum", "qui", "dolorem", "eum", "fugiat", "quo", "voluptas", "nulla", "pariatur", "at", "vero", "eos", "et", "accusamus", "et", "iusto", "odio", "dignissimos", "ducimus", "qui", "blanditiis", "praesentium", "voluptatum", "deleniti", "atque", "corrupti", "quos", "dolores", "et", "quas", "molestias", "excepturi", "sint", "occaecati", "cupiditate", "non", "provident", "similique", "sunt", "in", "culpa", "qui", "officia", "deserunt", "mollitia", "animi", "id", "est", "laborum", "et", "dolorum", "fuga", "et", "harum", "quidem", "rerum", "facilis", "est", "et", "expedita", "distinctio", "nam", "libero", "tempore", "cum", "soluta", "nobis", "est", "eligendi", "optio", "cumque", "nihil", "impedit", "quo", "minus", "id", "quod", "maxime", "placeat", "facere", "possimus", "omnis", "voluptas", "assumenda", "est", "omnis", "dolor", "repellendus", "temporibus", "autem", "quibusdam", "et", "aut", "officiis", "debitis", "aut", "rerum", "necessitatibus", "saepe", "eveniet", "ut", "et", "voluptates", "repudiandae", "sint", "et", "molestiae", "non", "recusandae", "itaque", "earum", "rerum", "hic", "tenetur", "a", "sapiente", "delectus", "ut", "aut", "reiciendis", "voluptatibus", "maiores", "alias", "consequatur", "aut", "perferendis", "doloribus", "asperiores", "repellat"];
+        
+        storedWords = [];
+
+        updateWordStorage();
+
+        // Handle window resize to recalculate words per column
+        window.addEventListener('resize', () => {
+            updateWordStorage();
+        });
+
+        // Add scroll button event listeners
+        scrollLeftBtn.addEventListener('click', scrollLeft);
+        scrollRightBtn.addEventListener('click', scrollRight);
+        
+        // Add color toggle event listener
+        colorToggle.addEventListener('click', toggleTextColor);
+        
+        // Add save and load button event listeners
+        const saveIcon = document.getElementById('saveIcon');
+        const loadIcon = document.getElementById('loadIcon');
+        
+        saveIcon.addEventListener('click', saveText);
+        loadIcon.addEventListener('click', loadText);
+
+        // Make entire screen clickable to focus input
+        container.addEventListener('click', (e) => {
+            if (e.target !== textInput) {
+                textInput.focus();
+            }
+        });
+
+        // Handle keydown for special keys
+        textInput.addEventListener('keydown', (e) => {
+            // Prevent backspace from deleting stored words
+            if (e.key === 'Backspace' && textInput.value === '') {
+                e.preventDefault();
+            }
+            
+            // Handle Space key
+            if (e.key === ' ') {
+                e.preventDefault();
+                if (textInput.value.trim()) {
+                    storedWords.push(textInput.value.trim());
+                    updateWordStorage();
+                    createFloatingWord(textInput.value.trim());
+                    textInput.value = '';
+                }
+            }
+            
+            // Handle Enter key
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (textInput.value.trim()) {
+                    storedWords.push(textInput.value.trim());
+                    updateWordStorage();
+                    createFloatingWord(textInput.value.trim());
+                    textInput.value = '';
+                }
+            }
+        });
+
+        function calculateWordsPerColumn() {
+            // Calculate words per column based on how many words fit in the height
+            const containerHeight = container.offsetHeight - 40; // Account for padding
+            const lineHeight = parseFloat(getComputedStyle(wordStorage).lineHeight);
+            const fontSize = parseFloat(getComputedStyle(wordStorage).fontSize);
+            const linesPerColumn = Math.floor(containerHeight / lineHeight);
+            
+            // Estimate words per line and calculate total words per column
+            const avgWordLength = 5; // Average word length
+            const columnWidth = (container.offsetWidth - 40) / 5; // Width of one column
+            const charsPerLine = Math.floor(columnWidth / (fontSize * 0.6)); // Rough estimate
+            wordsPerRow = Math.floor(charsPerLine / (avgWordLength + 1)); // +1 for space
+            
+            actualWordsPerColumn = Math.floor(linesPerColumn * wordsPerRow);
+            
+            console.log('Calculated words per column:', actualWordsPerColumn, 'Lines per column:', linesPerColumn, 'Words per row:', wordsPerRow);
+            
+            return actualWordsPerColumn;
+        }
+
+        function calculateCompletedRows() {
+            // Calculate how many complete rows have been filled across all columns
+            completedRows = Math.floor(storedWords.length / wordsPerRow);
+            
+            // Calculate which column we're currently in and how many rows in that column
+            const currentColumn = Math.floor(storedWords.length / actualWordsPerColumn);
+            const wordsInCurrentColumn = storedWords.length % actualWordsPerColumn;
+            const rowsInCurrentColumn = Math.floor(wordsInCurrentColumn / wordsPerRow);
+            
+            console.log('Total completed rows:', completedRows, 'Current column:', currentColumn + 1, 'Rows in current column:', rowsInCurrentColumn);
+            
+            return {
+                totalCompletedRows: completedRows,
+                currentColumn: currentColumn + 1,
+                rowsInCurrentColumn: rowsInCurrentColumn,
+                wordsInCurrentColumn: wordsInCurrentColumn
+            };
+        }
+
+        function updateWordStorage() {
+            // Create HTML with first 10 words in white (only if not already shown)
+            let html = '';
+            storedWords.forEach((word, index) => {
+                if (index < 10 && index >= wordsShownInWhite) {
+                    html += `<span class="recent-word" data-index="${index}">${word}</span> `;
+                } else {
+                    html += word + ' ';
+                }
+            });
+            
+            wordStorage.innerHTML = html;
+            wordCount.textContent = storedWords.length + ' words';
+            
+            // Update text color for non-recent words
+            wordStorage.style.color = textColors[textColorIndex];
+            
+            // Update scroll position
+            wordStorage.style.transform = `translateX(-${scrollOffset * 20}%)`;
+            
+            // Update button states
+            updateScrollButtons();
+            
+            // Fade recent words to grey after 5 seconds (only for new words)
+            if (wordsShownInWhite < 10 && storedWords.length > wordsShownInWhite) {
+                setTimeout(() => {
+                    const recentWords = wordStorage.querySelectorAll('.recent-word');
+                    recentWords.forEach(span => {
+                        span.style.color = textColors[textColorIndex];
+                    });
+                    wordsShownInWhite = Math.min(10, storedWords.length);
+                }, 5000);
+            }
+            
+            // Trigger color toggle swell effect when user reaches 10 words
+            if (storedWords.length === 10) {
+                colorToggle.classList.add('swell');
+                setTimeout(() => {
+                    colorToggle.classList.remove('swell');
+                }, 2000);
+            }
+        }
+
+        function toggleTextColor() {
+            textColorIndex = (textColorIndex + 1) % textColors.length;
+            wordStorage.style.color = textColors[textColorIndex];
+            console.log('Text color changed to:', textColors[textColorIndex]);
+        }
+
+        function saveText() {
+            if (storedWords.length === 0) {
+                alert('No text to save!');
+                return;
+            }
+            
+            const text = storedWords.join(' ');
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `writing_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            console.log('Text saved successfully!');
+        }
+
+        function loadText() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.txt';
+            
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const text = e.target.result;
+                        storedWords = text.split(' ').filter(word => word.trim() !== '');
+                        updateWordStorage();
+                        console.log('Text loaded successfully!');
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            
+            input.click();
+        }
+
+        function updateScrollButtons() {
+            // Enable/disable left arrow based on scroll position
+            scrollLeftBtn.disabled = scrollOffset <= 0;
+            scrollLeftBtn.style.opacity = scrollOffset <= 0 ? '0.3' : '1';
+            
+            // Right arrow is always enabled (can always scroll to show more columns)
+            scrollRightBtn.disabled = false;
+            scrollRightBtn.style.opacity = '1';
+        }
+
+        function scrollLeft() {
+            if (scrollOffset > 0) {
+                scrollOffset--;
+                wordStorage.style.transform = `translateX(-${scrollOffset * 20}%)`;
+                updateScrollButtons();
+                console.log('Scrolled left, offset:', scrollOffset);
+            }
+        }
+
+        function scrollRight() {
+            scrollOffset++;
+            wordStorage.style.transform = `translateX(-${scrollOffset * 20}%)`;
+            updateScrollButtons();
+            console.log('Scrolled right, offset:', scrollOffset);
+        }
+
+        function createFloatingWord(word) {
+            const floatingWord = document.createElement('div');
+            floatingWord.className = 'floating-word';
+            floatingWord.textContent = word;
+            
+            // Position near the input
+            const rect = textInput.getBoundingClientRect();
+            floatingWord.style.left = (rect.left + rect.width / 2) + 'px';
+            floatingWord.style.top = (rect.top - 20) + 'px';
+            
+            document.body.appendChild(floatingWord);
+            
+            // Remove after animation
+            setTimeout(() => {
+                if (floatingWord.parentNode) {
+                    floatingWord.parentNode.removeChild(floatingWord);
+                }
+            }, 2000);
+        }
+
+        // Auto-type instructions on page load
+        function autoTypeInstructions() {
+            const instructionText = "Start typing, then just keep typing. Write now. Edit later.";
+            let charIndex = 0;
+            
+            function typeNextChar() {
+                if (charIndex < instructionText.length) {
+                    const char = instructionText[charIndex];
+                    
+                    // Add character to input
+                    textInput.value += char;
+                    
+                    // If it's a space, trigger word completion
+                    if (char === ' ') {
+                        setTimeout(() => {
+                            const spaceEvent = new KeyboardEvent('keydown', {
+                                key: ' ',
+                                code: 'Space',
+                                keyCode: 32,
+                                which: 32,
+                                bubbles: true
+                            });
+                            textInput.dispatchEvent(spaceEvent);
+                        }, 100);
+                    }
+                    
+                    charIndex++;
+                    
+                    // Check if we just finished "Start typing, then just keep typing."
+                    if (charIndex === 40) { // "Start typing, then just keep typing." is 40 characters
+                        // 1.2 second pause after this phrase
+                        setTimeout(typeNextChar, 1200);
+                    } else {
+                        // Type next character after normal delay
+                        setTimeout(typeNextChar, 100);
+                    }
+                } else {
+                    // Clear the input and focus it for user to continue
+                    setTimeout(() => {
+                        textInput.value = '';
+                        textInput.focus();
+                    }, 1000);
+                }
+            }
+            
+            // Start typing after a short delay
+            setTimeout(typeNextChar, 1000);
+        }
+
+        // Focus input on page load and start auto-typing
+        window.addEventListener('load', () => {
+            textInput.focus();
+            autoTypeInstructions();
+        });
+
+        // Keep focus on input
+        textInput.addEventListener('blur', () => {
+            setTimeout(() => textInput.focus(), 0);
+        });
+    </script>
+</body>
+</html>
