@@ -21,6 +21,7 @@
             justify-content: center;
             cursor: text;
             overflow: hidden;
+            transition: background-color 0.3s ease;
         }
 
         .container {
@@ -33,7 +34,7 @@
         }
 
         .text-input {
-            background: transparent;
+            background: #000000;
             border: none;
             outline: none;
             color: #ffffff;
@@ -43,6 +44,8 @@
             width: 300px;
             height: 50px;
             position: relative;
+            transition: all 0.3s ease;
+            border-radius: 10px;
         }
 
 
@@ -55,6 +58,7 @@
             pointer-events: none;
             animation: floatAway 2s ease-out forwards;
             z-index: 10;
+            transition: color 0.3s ease;
         }
 
         @keyframes floatAway {
@@ -74,7 +78,7 @@
             left: 0;
             bottom: 0;
             font-size: 11px;
-            color: #111111;
+            color: #ffffff;
             padding: 20px;
             line-height: 1.3;
             column-count: 5;
@@ -169,11 +173,11 @@
         }
 
         .save-icon:hover {
-            color: #cccccc;
+            opacity: 0.7;
         }
 
         .load-icon:hover {
-            color: #cccccc;
+            opacity: 0.7;
         }
 
         .recent-word {
@@ -203,11 +207,11 @@
         }
 
         .scroll-arrow:hover {
-            color: #cccccc;
+            opacity: 0.7;
         }
 
         .scroll-arrow:active {
-            color: #999999;
+            opacity: 0.5;
         }
     </style>
 </head>
@@ -245,16 +249,18 @@
         let actualWordsPerColumn = 200; // Will be calculated dynamically
         let wordsPerRow = 0; // Words per row (calculated dynamically)
         let completedRows = 0; // Total completed rows across all columns
-        let textColorIndex = 0; // 0 = dark grey, 1 = white, 2 = black
-        const textColors = ['#111111', '#ffffff', '#000000'];
+        let textColorIndex = 0; // 0 = white, 1 = dark grey, 2 = black, 3 = parchment
+        const textColors = ['#ffffff', '#111111', '#000000', '#000000'];
+        const backgroundColors = ['#000000', '#000000', '#000000', '#f4f1e8'];
+        const inputColors = ['#ffffff', '#ffffff', '#ffffff', '#000000'];
+        const uiColors = ['#ffffff', '#ffffff', '#ffffff', '#000000'];
+        const inputBackgrounds = [
+            '#000000',
+            '#000000', 
+            '#000000',
+            '#f4f1e8'
+        ];
 
-        // Hardcoded lorem ipsum for testing
-        const loremIpsum = "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim id est laborum sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium totam rem aperiam eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt neque porro quisquam est qui dolorem ipsum quia dolor sit amet consectetur adipisci velit sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem ut enim ad minima veniam quis nostrum exercitationem ullam corporis suscipit laboriosam nisi ut aliquid ex ea commodi consequatur quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur vel illum qui dolorem eum fugiat quo voluptas nulla pariatur at vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident similique sunt in culpa qui officia deserunt mollitia animi id est laborum et dolorum fuga et harum quidem rerum facilis est et expedita distinctio nam libero tempore cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus omnis voluptas assumenda est omnis dolor repellendus temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae itaque earum rerum hic tenetur a sapiente delectus ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat";
-        
-        // Split lorem ipsum into words and populate for testing
-        // Generate 1200 words to test scrolling (6 columns worth)
-        const loremWords = ["lorem", "ipsum", "dolor", "sit", "amet", "consectetur", "adipiscing", "elit", "sed", "do", "eiusmod", "tempor", "incididunt", "ut", "labore", "et", "dolore", "magna", "aliqua", "ut", "enim", "ad", "minim", "veniam", "quis", "nostrud", "exercitation", "ullamco", "laboris", "nisi", "ut", "aliquip", "ex", "ea", "commodo", "consequat", "duis", "aute", "irure", "dolor", "in", "reprehenderit", "in", "voluptate", "velit", "esse", "cillum", "dolore", "eu", "fugiat", "nulla", "pariatur", "excepteur", "sint", "occaecat", "cupidatat", "non", "proident", "sunt", "in", "culpa", "qui", "officia", "deserunt", "mollit", "anim", "id", "est", "laborum", "sed", "ut", "perspiciatis", "unde", "omnis", "iste", "natus", "error", "sit", "voluptatem", "accusantium", "doloremque", "laudantium", "totam", "rem", "aperiam", "eaque", "ipsa", "quae", "ab", "illo", "inventore", "veritatis", "et", "quasi", "architecto", "beatae", "vitae", "dicta", "sunt", "explicabo", "nemo", "enim", "ipsam", "voluptatem", "quia", "voluptas", "sit", "aspernatur", "aut", "odit", "aut", "fugit", "sed", "quia", "consequuntur", "magni", "dolores", "eos", "qui", "ratione", "voluptatem", "sequi", "nesciunt", "neque", "porro", "quisquam", "est", "qui", "dolorem", "ipsum", "quia", "dolor", "sit", "amet", "consectetur", "adipisci", "velit", "sed", "quia", "non", "numquam", "eius", "modi", "tempora", "incidunt", "ut", "labore", "et", "dolore", "magnam", "aliquam", "quaerat", "voluptatem", "ut", "enim", "ad", "minima", "veniam", "quis", "nostrum", "exercitationem", "ullam", "corporis", "suscipit", "laboriosam", "nisi", "ut", "aliquid", "ex", "ea", "commodi", "consequatur", "quis", "autem", "vel", "eum", "iure", "reprehenderit", "qui", "in", "ea", "voluptate", "velit", "esse", "quam", "nihil", "molestiae", "consequatur", "vel", "illum", "qui", "dolorem", "eum", "fugiat", "quo", "voluptas", "nulla", "pariatur", "at", "vero", "eos", "et", "accusamus", "et", "iusto", "odio", "dignissimos", "ducimus", "qui", "blanditiis", "praesentium", "voluptatum", "deleniti", "atque", "corrupti", "quos", "dolores", "et", "quas", "molestias", "excepturi", "sint", "occaecati", "cupiditate", "non", "provident", "similique", "sunt", "in", "culpa", "qui", "officia", "deserunt", "mollitia", "animi", "id", "est", "laborum", "et", "dolorum", "fuga", "et", "harum", "quidem", "rerum", "facilis", "est", "et", "expedita", "distinctio", "nam", "libero", "tempore", "cum", "soluta", "nobis", "est", "eligendi", "optio", "cumque", "nihil", "impedit", "quo", "minus", "id", "quod", "maxime", "placeat", "facere", "possimus", "omnis", "voluptas", "assumenda", "est", "omnis", "dolor", "repellendus", "temporibus", "autem", "quibusdam", "et", "aut", "officiis", "debitis", "aut", "rerum", "necessitatibus", "saepe", "eveniet", "ut", "et", "voluptates", "repudiandae", "sint", "et", "molestiae", "non", "recusandae", "itaque", "earum", "rerum", "hic", "tenetur", "a", "sapiente", "delectus", "ut", "aut", "reiciendis", "voluptatibus", "maiores", "alias", "consequatur", "aut", "perferendis", "doloribus", "asperiores", "repellat"];
-        
         storedWords = [];
 
         updateWordStorage();
@@ -355,11 +361,11 @@
         }
 
         function updateWordStorage() {
-            // Create HTML with first 10 words in white (only if not already shown)
+            // Create HTML with first 10 words in current input color (only if not already shown)
             let html = '';
             storedWords.forEach((word, index) => {
                 if (index < 10 && index >= wordsShownInWhite) {
-                    html += `<span class="recent-word" data-index="${index}">${word}</span> `;
+                    html += `<span class="recent-word" data-index="${index}" style="color: ${inputColors[textColorIndex]}">${word}</span> `;
                 } else {
                     html += word + ' ';
                 }
@@ -377,7 +383,7 @@
             // Update button states
             updateScrollButtons();
             
-            // Fade recent words to grey after 5 seconds (only for new words)
+            // Fade recent words to background color after 5 seconds (only for new words)
             if (wordsShownInWhite < 10 && storedWords.length > wordsShownInWhite) {
                 setTimeout(() => {
                     const recentWords = wordStorage.querySelectorAll('.recent-word');
@@ -400,7 +406,22 @@
         function toggleTextColor() {
             textColorIndex = (textColorIndex + 1) % textColors.length;
             wordStorage.style.color = textColors[textColorIndex];
-            console.log('Text color changed to:', textColors[textColorIndex]);
+            document.body.style.backgroundColor = backgroundColors[textColorIndex];
+            textInput.style.color = inputColors[textColorIndex];
+            textInput.style.background = inputBackgrounds[textColorIndex];
+            
+            // Update UI elements
+            wordCount.style.color = uiColors[textColorIndex];
+            colorToggle.style.borderColor = uiColors[textColorIndex];
+            saveIcon.style.color = uiColors[textColorIndex];
+            loadIcon.style.color = uiColors[textColorIndex];
+            scrollLeftBtn.style.color = uiColors[textColorIndex];
+            scrollRightBtn.style.color = uiColors[textColorIndex];
+            
+            // Update recent words to use new input color
+            updateWordStorage();
+            
+            console.log('Color scheme changed to:', textColorIndex, 'Text:', textColors[textColorIndex], 'Background:', backgroundColors[textColorIndex], 'Input:', inputColors[textColorIndex], 'UI:', uiColors[textColorIndex]);
         }
 
         function saveText() {
@@ -476,6 +497,7 @@
             const floatingWord = document.createElement('div');
             floatingWord.className = 'floating-word';
             floatingWord.textContent = word;
+            floatingWord.style.color = inputColors[textColorIndex];
             
             // Position near the input
             const rect = textInput.getBoundingClientRect();
@@ -492,59 +514,10 @@
             }, 2000);
         }
 
-        // Auto-type instructions on page load
-        function autoTypeInstructions() {
-            const instructionText = "Start typing, then just keep typing. Write now. Edit later.";
-            let charIndex = 0;
-            
-            function typeNextChar() {
-                if (charIndex < instructionText.length) {
-                    const char = instructionText[charIndex];
-                    
-                    // Add character to input
-                    textInput.value += char;
-                    
-                    // If it's a space, trigger word completion
-                    if (char === ' ') {
-                        setTimeout(() => {
-                            const spaceEvent = new KeyboardEvent('keydown', {
-                                key: ' ',
-                                code: 'Space',
-                                keyCode: 32,
-                                which: 32,
-                                bubbles: true
-                            });
-                            textInput.dispatchEvent(spaceEvent);
-                        }, 100);
-                    }
-                    
-                    charIndex++;
-                    
-                    // Check if we just finished "Start typing, then just keep typing."
-                    if (charIndex === 40) { // "Start typing, then just keep typing." is 40 characters
-                        // 1.2 second pause after this phrase
-                        setTimeout(typeNextChar, 1200);
-                    } else {
-                        // Type next character after normal delay
-                        setTimeout(typeNextChar, 100);
-                    }
-                } else {
-                    // Clear the input and focus it for user to continue
-                    setTimeout(() => {
-                        textInput.value = '';
-                        textInput.focus();
-                    }, 1000);
-                }
-            }
-            
-            // Start typing after a short delay
-            setTimeout(typeNextChar, 1000);
-        }
 
-        // Focus input on page load and start auto-typing
+        // Focus input on page load
         window.addEventListener('load', () => {
             textInput.focus();
-            autoTypeInstructions();
         });
 
         // Keep focus on input
