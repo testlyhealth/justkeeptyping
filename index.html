@@ -12,8 +12,8 @@
         }
 
         body {
-            background-color: #000000;
-            color: #ffffff;
+            background-color: #f4f1e8;
+            color: #000000;
             font-family: 'Courier New', monospace;
             height: 100vh;
             display: flex;
@@ -34,10 +34,10 @@
         }
 
         .text-input {
-            background: #000000;
+            background: #f4f1e8;
             border: none;
             outline: none;
-            color: #ffffff;
+            color: #000000;
             font-family: 'Courier New', monospace;
             font-size: 32px;
             text-align: center;
@@ -111,7 +111,7 @@
             position: absolute;
             right: 20px;
             font-size: 14px;
-            color: #ffffff;
+            color: #000000;
             font-family: 'Courier New', monospace;
         }
 
@@ -120,7 +120,7 @@
             left: 20px;
             width: 16px;
             height: 16px;
-            border: 2px solid #ffffff;
+            border: 2px solid #000000;
             border-radius: 50%;
             background: transparent;
             cursor: pointer;
@@ -128,12 +128,12 @@
         }
 
         .color-toggle:hover {
-            border-color: #cccccc;
+            border-color: #666666;
         }
 
         .color-toggle.swell {
-            background: white;
-            border-color: white;
+            background: black;
+            border-color: black;
             transform: scale(1.2);
             transition: all 0.5s ease-in-out;
         }
@@ -146,7 +146,7 @@
             background: transparent;
             border: none;
             cursor: pointer;
-            color: #ffffff;
+            color: #000000;
             font-size: 12px;
             display: flex;
             align-items: center;
@@ -163,7 +163,7 @@
             background: transparent;
             border: none;
             cursor: pointer;
-            color: #ffffff;
+            color: #000000;
             font-size: 12px;
             display: flex;
             align-items: center;
@@ -181,7 +181,7 @@
         }
 
         .recent-word {
-            color: white;
+            color: black;
             transition: color 5s ease-in-out;
         }
 
@@ -194,7 +194,7 @@
         .scroll-arrow {
             background: transparent;
             border: none;
-            color: #ffffff;
+            color: #000000;
             font-family: 'Courier New', monospace;
             font-size: 18px;
             width: 40px;
@@ -249,7 +249,7 @@
         let actualWordsPerColumn = 200; // Will be calculated dynamically
         let wordsPerRow = 0; // Words per row (calculated dynamically)
         let completedRows = 0; // Total completed rows across all columns
-        let textColorIndex = 0; // 0 = white, 1 = dark grey, 2 = black, 3 = parchment
+        let textColorIndex = 3; // 0 = white, 1 = dark grey, 2 = black, 3 = parchment
         const textColors = ['#ffffff', '#111111', '#000000', '#000000'];
         const backgroundColors = ['#000000', '#000000', '#000000', '#f4f1e8'];
         const inputColors = ['#ffffff', '#ffffff', '#ffffff', '#000000'];
