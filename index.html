@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Just Keep Typing</title>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -223,6 +224,157 @@
             opacity: 0.5;
         }
 
+        .custom-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .custom-modal.show {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: #fafafa;
+            padding: 30px;
+            border-radius: 10px;
+            min-width: 300px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 10001;
+            pointer-events: auto;
+        }
+
+        .modal-title {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            color: #000000;
+            margin-bottom: 20px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 2px solid #000000;
+            border-radius: 5px;
+            background: #fafafa;
+            color: #000000;
+            margin-bottom: 20px;
+            outline: none;
+        }
+
+        .modal-input:focus {
+            border-color: #666666;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .modal-button {
+            padding: 10px 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: transparent;
+            border: 2px solid #000000;
+            border-radius: 5px;
+            color: #000000;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-button:hover {
+            background: #000000;
+            color: #fafafa;
+        }
+
+        .modal-button.cancel {
+            border-color: #666666;
+            color: #666666;
+        }
+
+        .modal-button.cancel:hover {
+            background: #666666;
+            color: #fafafa;
+        }
+
+        .alert-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .alert-modal.show {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .alert-content {
+            background: #fafafa;
+            padding: 30px;
+            border-radius: 10px;
+            min-width: 250px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 10001;
+            pointer-events: auto;
+        }
+
+        .alert-title {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            color: #000000;
+            margin-bottom: 20px;
+        }
+
+        .alert-button {
+            padding: 10px 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: transparent;
+            border: 2px solid #000000;
+            border-radius: 5px;
+            color: #000000;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .alert-button:hover {
+            background: #000000;
+            color: #fafafa;
+        }
+
         .placeholder-text {
             position: absolute;
             top: 50%;
@@ -257,6 +409,26 @@
             <div class="word-count" id="wordCount">0 words</div>
         </div>
         <input type="text" class="text-input" id="textInput" placeholder="" autocomplete="off" spellcheck="false">
+    </div>
+    
+    <!-- Custom Modal Dialog - Outside container to avoid conflicts -->
+    <div class="custom-modal" id="customModal">
+        <div class="modal-content">
+            <div class="modal-title">Enter filename</div>
+            <input type="text" class="modal-input" id="modalInput" placeholder="writing_2024-01-15">
+                <div class="modal-buttons">
+                    <button class="modal-button" id="modalSave">Save</button>
+                    <button class="modal-button cancel" id="modalCancel">Cancel</button>
+                </div>
+        </div>
+    </div>
+    
+    <!-- Custom Alert Modal -->
+    <div class="alert-modal" id="alertModal">
+        <div class="alert-content">
+            <div class="alert-title" id="alertTitle">No text to save!</div>
+            <button class="alert-button" id="alertOk">OK</button>
+        </div>
     </div>
 
     <script>
@@ -340,9 +512,43 @@
         
         saveIcon.addEventListener('click', saveText);
         loadIcon.addEventListener('click', loadText);
+        
+        // Modal event listeners
+        document.getElementById('modalSave').addEventListener('click', performSave);
+        document.getElementById('modalCancel').addEventListener('click', hideCustomModal);
+        document.getElementById('modalInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                performSave();
+            } else if (e.key === 'Escape') {
+                hideCustomModal();
+            }
+        });
+        
+        // Handle click on modal input to select all text
+        document.getElementById('modalInput').addEventListener('click', function() {
+            this.select();
+        });
+        
+        // Handle focus on modal input to select all text
+        document.getElementById('modalInput').addEventListener('focus', function() {
+            this.select();
+        });
+        
+        // Prevent modal from closing when clicking inside it
+        document.getElementById('customModal').addEventListener('click', (e) => {
+            if (e.target.id === 'customModal') {
+                hideCustomModal();
+            }
+        });
 
         // Make entire screen clickable to focus input
         container.addEventListener('click', (e) => {
+            // Don't interfere if modal is open
+            const modal = document.getElementById('customModal');
+            if (modal.classList.contains('show')) {
+                return;
+            }
+            
             if (e.target !== textInput) {
                 textInput.focus();
             }
@@ -466,10 +672,33 @@
             scrollRightBtn.style.color = uiColors[textColorIndex];
             placeholderText.style.color = uiColors[textColorIndex];
             
+            // Update modal colors to match theme
+            updateModalColors();
+            
             // Update recent words to use new input color
             updateWordStorage();
             
             console.log('Color scheme changed to:', textColorIndex, 'Text:', textColors[textColorIndex], 'Background:', backgroundColors[textColorIndex], 'Input:', inputColors[textColorIndex], 'UI:', uiColors[textColorIndex]);
+        }
+        
+        function updateModalColors() {
+            const modalContent = document.querySelector('.modal-content');
+            const modalTitle = document.querySelector('.modal-title');
+            const modalInput = document.querySelector('.modal-input');
+            const modalButtons = document.querySelectorAll('.modal-button');
+            
+            if (modalContent) {
+                modalContent.style.background = backgroundColors[textColorIndex];
+                modalTitle.style.color = uiColors[textColorIndex];
+                modalInput.style.background = backgroundColors[textColorIndex];
+                modalInput.style.color = inputColors[textColorIndex];
+                modalInput.style.borderColor = uiColors[textColorIndex];
+                
+                modalButtons.forEach(button => {
+                    button.style.color = uiColors[textColorIndex];
+                    button.style.borderColor = uiColors[textColorIndex];
+                });
+            }
         }
 
         function saveText() {
@@ -478,19 +707,84 @@
                 return;
             }
             
+            // Show custom modal
+            showCustomModal();
+        }
+        
+        function showCustomModal() {
+            const modal = document.getElementById('customModal');
+            const input = document.getElementById('modalInput');
+            const defaultName = `writing_${new Date().toISOString().split('T')[0]}`;
+            
+            // Disable the main text input to prevent conflicts
+            textInput.disabled = true;
+            textInput.blur();
+            
+            input.value = defaultName;
+            modal.classList.add('show');
+            
+            // Force a layout recalculation
+            modal.offsetHeight;
+            
+            // Focus the modal input
+            setTimeout(() => {
+                input.focus();
+                input.select();
+            }, 100);
+        }
+        
+        function hideCustomModal() {
+            const modal = document.getElementById('customModal');
+            modal.classList.remove('show');
+            
+            // Re-enable the main text input
+            textInput.disabled = false;
+            
+            // Refocus the main input after a short delay
+            setTimeout(() => {
+                textInput.focus();
+            }, 100);
+        }
+        
+        function performSave() {
+            const input = document.getElementById('modalInput');
+            const fileName = input.value.trim();
+            
+            if (!fileName) {
+                return; // Empty filename
+            }
+            
+            hideCustomModal();
+            
+            const cleanFileName = fileName.replace(/[^a-zA-Z0-9_-]/g, '_');
+            
+            // Create RTF (Rich Text Format) content
             const text = storedWords.join(' ');
-            const blob = new Blob([text], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
+            const rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Courier New;}} \\f0\\fs24 ${text.replace(/\n/g, '\\par ')}}`;
             
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `writing_${new Date().toISOString().split('T')[0]}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            // Create blob and save
+            const blob = new Blob([rtfContent], { type: 'application/rtf' });
+            saveAs(blob, `${cleanFileName}.rtf`);
             
-            console.log('Text saved successfully!');
+            console.log('RTF document saved successfully!');
+        }
+        
+        function saveAsText(providedFileName = null) {
+            const text = storedWords.join(' ');
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            
+            let fileName;
+            if (providedFileName) {
+                fileName = providedFileName;
+            } else {
+                const defaultName = `writing_${new Date().toISOString().split('T')[0]}`;
+                fileName = prompt('Enter filename (without extension):', defaultName);
+            }
+            
+            if (fileName !== null) {
+                const cleanFileName = fileName.replace(/[^a-zA-Z0-9_-]/g, '_');
+                saveAs(blob, `${cleanFileName}.txt`);
+            }
         }
 
         function loadText() {
