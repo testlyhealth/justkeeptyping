@@ -524,6 +524,14 @@
             }
         });
         
+        // Alert modal event listeners
+        document.getElementById('alertOk').addEventListener('click', hideCustomAlert);
+        document.getElementById('alertModal').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === 'Escape') {
+                hideCustomAlert();
+            }
+        });
+        
         // Handle click on modal input to select all text
         document.getElementById('modalInput').addEventListener('click', function() {
             this.select();
@@ -699,11 +707,23 @@
                     button.style.borderColor = uiColors[textColorIndex];
                 });
             }
+            
+            // Update alert modal colors
+            const alertContent = document.querySelector('.alert-content');
+            const alertTitle = document.querySelector('.alert-title');
+            const alertButton = document.querySelector('.alert-button');
+            
+            if (alertContent) {
+                alertContent.style.background = backgroundColors[textColorIndex];
+                alertTitle.style.color = uiColors[textColorIndex];
+                alertButton.style.color = uiColors[textColorIndex];
+                alertButton.style.borderColor = uiColors[textColorIndex];
+            }
         }
 
         function saveText() {
             if (storedWords.length === 0) {
-                alert('No text to save!');
+                showCustomAlert('No text to save!');
                 return;
             }
             
@@ -769,6 +789,34 @@
             console.log('RTF document saved successfully!');
         }
         
+        function showCustomAlert(message) {
+            const alertModal = document.getElementById('alertModal');
+            const alertTitle = document.getElementById('alertTitle');
+            
+            // Disable the main text input to prevent conflicts
+            textInput.disabled = true;
+            textInput.blur();
+            
+            alertTitle.textContent = message;
+            alertModal.classList.add('show');
+            
+            // Force a layout recalculation
+            alertModal.offsetHeight;
+        }
+        
+        function hideCustomAlert() {
+            const alertModal = document.getElementById('alertModal');
+            alertModal.classList.remove('show');
+            
+            // Re-enable the main text input
+            textInput.disabled = false;
+            
+            // Refocus the main input after a short delay
+            setTimeout(() => {
+                textInput.focus();
+            }, 100);
+        }
+        
         function saveAsText(providedFileName = null) {
             const text = storedWords.join(' ');
             const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
@@ -790,7 +838,7 @@
         function loadText() {
             const input = document.createElement('input');
             input.type = 'file';
-            input.accept = '.txt';
+            input.accept = '.txt,.rtf';
             
             input.onchange = function(event) {
                 const file = event.target.files[0];
@@ -798,7 +846,14 @@
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         const text = e.target.result;
-                        storedWords = text.split(' ').filter(word => word.trim() !== '');
+                        let processedText = text;
+                        
+                        // Check if it's an RTF file and extract plain text
+                        if (file.name.toLowerCase().endsWith('.rtf')) {
+                            processedText = extractTextFromRTF(text);
+                        }
+                        
+                        storedWords = processedText.split(' ').filter(word => word.trim() !== '');
                         updateWordStorage();
                         console.log('Text loaded successfully!');
                     };
@@ -807,6 +862,28 @@
             };
             
             input.click();
+        }
+        
+        function extractTextFromRTF(rtfText) {
+            // Simple RTF text extraction - removes RTF formatting codes
+            let plainText = rtfText
+                // Remove RTF header and font table
+                .replace(/\\rtf1[^}]*\{[^}]*\}/g, '')
+                // Remove font commands
+                .replace(/\\f\d+/g, '')
+                // Remove font size commands
+                .replace(/\\fs\d+/g, '')
+                // Remove paragraph markers
+                .replace(/\\par\s*/g, '\n')
+                // Remove other common RTF commands
+                .replace(/\\[a-z]+\d*\s*/g, '')
+                // Remove curly braces
+                .replace(/[{}]/g, '')
+                // Clean up extra whitespace
+                .replace(/\s+/g, ' ')
+                .trim();
+                
+            return plainText;
         }
 
         function updateScrollButtons() {
