@@ -12,7 +12,7 @@
         }
 
         body {
-            background-color: #f4f1e8;
+            background-color: #fafafa;
             color: #000000;
             font-family: 'Courier New', monospace;
             height: 100vh;
@@ -34,7 +34,7 @@
         }
 
         .text-input {
-            background: #f4f1e8;
+            background: #fafafa;
             border: none;
             outline: none;
             color: #000000;
@@ -273,22 +273,16 @@
         let storedWords = [];
         let currentWord = '';
         let scrollOffset = 0;
-        let wordsShownInWhite = 0; // Track how many words have been shown in white
         let wordsPerColumn = 200; // Approximate words per column
         let actualWordsPerColumn = 200; // Will be calculated dynamically
         let wordsPerRow = 0; // Words per row (calculated dynamically)
         let completedRows = 0; // Total completed rows across all columns
-        let textColorIndex = 3; // 0 = white, 1 = dark grey, 2 = black, 3 = parchment
-        const textColors = ['#ffffff', '#111111', '#000000', '#000000'];
-        const backgroundColors = ['#000000', '#000000', '#000000', '#f4f1e8'];
-        const inputColors = ['#ffffff', '#ffffff', '#ffffff', '#000000'];
-        const uiColors = ['#ffffff', '#ffffff', '#ffffff', '#000000'];
-        const inputBackgrounds = [
-            '#000000',
-            '#000000', 
-            '#000000',
-            '#f4f1e8'
-        ];
+        let textColorIndex = 0; // 0 = light theme, 1 = dark theme
+        const textColors = ['rgba(0, 0, 0, 0.7)', 'rgba(255, 255, 255, 0.7)'];
+        const backgroundColors = ['#fafafa', '#1a1a1a'];
+        const inputColors = ['#000000', '#ffffff'];
+        const uiColors = ['#000000', '#ffffff'];
+        const inputBackgrounds = ['#fafafa', '#1a1a1a'];
         let inactivityTimer = null;
         let hasEverTyped = false;
 
@@ -436,14 +430,10 @@
         }
 
         function updateWordStorage() {
-            // Create HTML with first 10 words in current input color (only if not already shown)
+            // Create HTML with all words in the same grey color
             let html = '';
             storedWords.forEach((word, index) => {
-                if (index < 10 && index >= wordsShownInWhite) {
-                    html += `<span class="recent-word" data-index="${index}" style="color: ${inputColors[textColorIndex]}">${word}</span> `;
-                } else {
-                    html += word + ' ';
-                }
+                html += word + ' ';
             });
             
             wordStorage.innerHTML = html;
@@ -458,21 +448,10 @@
             // Update button states
             updateScrollButtons();
             
-            // Fade recent words to background color after 5 seconds (only for new words)
-            if (wordsShownInWhite < 10 && storedWords.length > wordsShownInWhite) {
-                setTimeout(() => {
-                    const recentWords = wordStorage.querySelectorAll('.recent-word');
-                    recentWords.forEach(span => {
-                        span.style.color = textColors[textColorIndex];
-                    });
-                    wordsShownInWhite = Math.min(10, storedWords.length);
-                }, 5000);
-            }
-            
         }
 
         function toggleTextColor() {
-            textColorIndex = (textColorIndex + 1) % textColors.length;
+            textColorIndex = (textColorIndex + 1) % 2;
             wordStorage.style.color = textColors[textColorIndex];
             document.body.style.backgroundColor = backgroundColors[textColorIndex];
             textInput.style.color = inputColors[textColorIndex];
