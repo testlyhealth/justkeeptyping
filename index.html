@@ -299,6 +299,16 @@
             color: #000000;
             cursor: pointer;
             transition: all 0.2s ease;
+            min-width: 70px;
+            width: 70px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-button {
+            background: #e0e0e0;
         }
 
         .modal-button:hover {
@@ -307,12 +317,13 @@
         }
 
         .modal-button.cancel {
-            border-color: #666666;
-            color: #666666;
+            background: transparent;
+            border-color: #000000;
+            color: #000000;
         }
 
         .modal-button.cancel:hover {
-            background: #666666;
+            background: #000000;
             color: #fafafa;
         }
 
@@ -415,7 +426,7 @@
     <div class="custom-modal" id="customModal">
         <div class="modal-content">
             <div class="modal-title">Enter filename</div>
-            <input type="text" class="modal-input" id="modalInput" placeholder="writing_2024-01-15">
+            <input type="text" class="modal-input" id="modalInput" placeholder="writing_15.01.2024">
                 <div class="modal-buttons">
                     <button class="modal-button" id="modalSave">Save</button>
                     <button class="modal-button cancel" id="modalCancel">Cancel</button>
@@ -734,7 +745,11 @@
         function showCustomModal() {
             const modal = document.getElementById('customModal');
             const input = document.getElementById('modalInput');
-            const defaultName = `writing_${new Date().toISOString().split('T')[0]}`;
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const defaultName = `writing_${day}.${month}.${year}`;
             
             // Disable the main text input to prevent conflicts
             textInput.disabled = true;
@@ -825,7 +840,11 @@
             if (providedFileName) {
                 fileName = providedFileName;
             } else {
-                const defaultName = `writing_${new Date().toISOString().split('T')[0]}`;
+                const now = new Date();
+                const day = String(now.getDate()).padStart(2, '0');
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const year = now.getFullYear();
+                const defaultName = `writing_${day}.${month}.${year}`;
                 fileName = prompt('Enter filename (without extension):', defaultName);
             }
             
